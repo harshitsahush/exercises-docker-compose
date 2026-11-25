@@ -9,11 +9,22 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REQUEST_ORIGIN=http://localhost:5001
+      - POSTGRES_HOST=db
     ports:
       - 8080:8080
-    depends_on:
-      - redis
-      
+
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: postgres
+    container_name: db
+    volumes:
+      - database:/var/lib/postgresql
+
   redis:
-    image: redis:7.4-alpine
-    
+    image: redis
+
+volumes:
+  database:
