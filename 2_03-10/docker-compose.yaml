@@ -1,6 +1,8 @@
 services:
   frontend:
     image: harshitsahush/frontend
+    environment:
+      - REACT_APP_BACKEND_URL=http://localhost:8000/api
 
   backend:
     image: harshitsahush/backend
@@ -8,6 +10,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - POSTGRES_HOST=db
+      - REQUEST_ORIGIN=http://localhost:8000
 
   db:
     image: postgres:18
