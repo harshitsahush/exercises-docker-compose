@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HabitPulse</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 560px;
+      margin: 48px auto;
+      padding: 0 16px;
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+    h1 { margin-bottom: 4px; }
+    .meta { color: #94a3b8; font-size: 0.9rem; margin-bottom: 24px; }
+    form { display: flex; gap: 8px; margin-bottom: 20px; }
+    input {
+      flex: 1;
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: 1px solid #334155;
+      background: #1e293b;
+      color: #f8fafc;
+    }
+    button {
+      padding: 10px 14px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      background: #38bdf8;
+      color: #0f172a;
+      font-weight: 600;
+    }
+    button.secondary { background: #334155; color: #e2e8f0; }
+    ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+    li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: 6px;
+      background: #1e293b;
+    }
+    .habit-name.done { text-decoration: line-through; color: #64748b; }
+    .actions { display: flex; gap: 6px; }
+  </style>
+</head>
+<body>
+  <h1>HabitPulse</h1>
+  <div class="meta" id="meta">Loading...</div>
+
+  <form id="habit-form">
+    <input id="habit-input" type="text" placeholder="Add a daily habit (e.g., Read 20 pages)" required />
+    <button type="submit">Add</button>
+  </form>
+
+  <ul id="habit-list"></ul>
+
+  <script>
+    const API_BASE = "/api";
+
+    async function loadHabits() {
+      const res = await fetch(`${API_BASE}/habits`);
+      const data = await res.json();
+      document.getElementById("meta").textContent =
+        `Habits tracked: ${data.habits.length} | Redis list calls: ${data.list_requests_count}`;
+
+      const list = document.getElementById("habit-list");
+      list.innerHTML = "";
+
+      for (const h of data.habits) {
+        const li = document.createElement("li");
+
+        const span = document.createElement("span");
+        span.textContent = h.name;
+        span.className = `habit-name ${h.completed_today ? "done" : ""}`;
+
+        const actions = document.createElement("div");
+        actions.className = "actions";
+
+        const toggleBtn = document.createElement("button");
+        toggleBtn.textContent = h.completed_today ? "Undo" : "Done";
+        toggleBtn.onclick = async () => {
+          await fetch(`${API_BASE}/habits/${h.id}/toggle`, { method: "POST" });
+          loadHabits();
+        };
+
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "Delete";
+        delBtn.className = "secondary";
+        delBtn.onclick = async () => {
+          await fetch(`${API_BASE}/habits/${h.id}`, { method: "DELETE" });
+          loadHabits();
+        };
+
+        actions.append(toggleBtn, delBtn);
+        li.append(span, actions);
+        list.appendChild(li);
+      }
+    }
+
+    document.getElementById("habit-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const input = document.getElementById("habit-input");
+      const name = input.value.trim();
+      if (!name) return;
+
+      await fetch(`${API_BASE}/habits`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      input.value = "";
+      loadHabits();
+    });
+
+    loadHabits();
+  </script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+services:
+  frontend:
+    build: ./habitpulse/frontend
+    volumes:
+      - ./habitpulse/frontend:/usr/share/nginx/html
+
+  backend:
+    build: ./habitpulse/backend
+    environment:
+      - POSTGRES_PASSWORD=harshit123
+      - POSTGRES_HOST=db
+      - REDIS_HOST=redis
+    volumes:
+      - ./habitpulse/backend:/app
+
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=habitpulse
+      - POSTGRES_PASSWORD=harshit123
+    volumes:
+      - postgres-storage:/var/lib/postgresql
+
+  redis:
+    image: redis
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - 8000:80
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - frontend
+      - backend
+
+volumes:
+  postgres-storage:
